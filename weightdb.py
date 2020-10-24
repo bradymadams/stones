@@ -20,14 +20,14 @@ class WeightDb(object):
         shutil.copyfile(self.name, self.name + '.bak')
 
     def create_table(self):
-        self.cursor.execute('CREATE TABLE weight_history (date datetime, weight real)')
+        self.cursor.execute('CREATE TABLE weight_history (date datetime, weight real, who varchar)')
         self.conn.commit()
 
-    def add_weight(self, weight, when=None):
+    def add_weight(self, who, weight, when=None):
         if when is None:
             when = datetime.datetime.now()
 
-        self.cursor.execute('INSERT INTO weight_history (date, weight) VALUES(?, ?)', (when, float(weight)))
+        self.cursor.execute('INSERT INTO weight_history (who, date, weight) VALUES(?, ?, ?)', (who, when, float(weight)))
         self.conn.commit()
 
     def add_csvdump(self, csv):
@@ -40,11 +40,13 @@ class WeightDb(object):
             dt = datetime.datetime.strptime(d + ' ' + t, '%m/%d/%y %I:%M:%S %p')
             self.add_weight(float(v), dt)
 
-    def get_weights(self, days=None):
-        select = 'SELECT * FROM weight_history'
-        args = []
+    def get_weights(self, who, days=None):
+        select = 'SELECT date, weight FROM weight_history WHERE who=?'
+
+        args = [who]
+
         if days:
-            select += ' WHERE date > ?'
+            select += ' AND date > ?'
             oldest = datetime.datetime.now() - datetime.timedelta(days=days)
             args.append(oldest)
 
@@ -55,8 +57,9 @@ class WeightDb(object):
         return nrows.fetchall()
 
 class WeightHistory(object):
-    def __init__(self, db, days):
-        self.weights = db.get_weights(days)
+    def __init__(self, who, db, days):
+        self.who = who
+        self.weights = db.get_weights(who, days)
 
     def count(self):
         return len(self.weights)
@@ -83,28 +86,3 @@ class WeightHistory(object):
             'minimum': '%6.2f' % self.minimum(),
             'maximum': '%6.2f' % self.maximum()
         }
-
-def usage():
-    print('%s -OPTION VALUE' % sys.argv[0])
-    print('Options:')
-    print('a --> Add weight VALUE')
-
-def main():
-    if len(sys.argv) < 3:
-        usage()
-        sys.exit(0)
-
-    w = WeightDb()
-
-    if sys.argv[1] == '-a':
-        w.backup()
-        v = float(sys.argv[2])
-        w.add_weight(v)
-    else:
-        usage()
-
-    w.close()
-
-if __name__ == '__main__':
-    main()
-

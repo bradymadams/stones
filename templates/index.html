@@ -19,34 +19,48 @@
     <div class="row">
       <div class="col-xs-12 col-md-offset2 col-md-8">
         <h1 class="page-header">Stones</h1>
+      </div>
+    </div>
+
+    <div class="row who-form">
+      <div class="col-xs-12 col-md-offset2 col-md-8">
         <div class="form-group row">
           <div class="col-xs-12 col-sm-6 col-md-4">
-            <input class="form-control" type="number" id=
-            "inputWeight" placeholder="Weight">
+            <input class="form-control" id="inputWho" placeholder="Username">
+          </div>
+          <div class="col-xs-12 col-sm-6 col-md-4">
+            <button type="button" class="form-control" onclick="login()">Login</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row weight-form">
+      <div class="col-xs-12 col-md-offset2 col-md-8">
+        <div class="form-group row">
+          <div class="col-xs-12 col-sm-6 col-md-4">
+            <input class="form-control" type="number" id="inputWeight" placeholder="Weight">
           </div>
           <div class="col-xs-12 col-sm-6 col-md-4">
             <div class="input-group date" id="whenpicker">
-              <input class="form-control" type="text" id="inputWhen">
+              <input class="form-control" type="text" id="inputWhen" disabled>
             </div>
           </div>
         </div>
         <div class="form-group row">
           <div class="col-xs-12 col-sm-6 col-md-4">
-            <button type="button" class="form-control" onclick=
-            "addWeight()">Add Weight</button>
+            <button type="button" class="form-control" onclick="addWeight()">Add Weight</button>
           </div>
         </div>
       </div>
     </div>
   </div>
+
   <div class="container">
     <div class="row" id="stats">
-      <p class="col-xs-12 col-sm-4">Average:&nbsp;<span id=
-      "stats-avg"></span></p>
-      <p class="col-xs-12 col-sm-4">Minimum:&nbsp;<span id=
-      "stats-min"></span></p>
-      <p class="col-xs-12 col-sm-4">Maximum:&nbsp;<span id=
-      "stats-max"></span></p>
+      <p class="col-xs-12 col-sm-4">Average:&nbsp;<span id="stats-avg"></span></p>
+      <p class="col-xs-12 col-sm-4">Minimum:&nbsp;<span id="stats-min"></span></p>
+      <p class="col-xs-12 col-sm-4">Maximum:&nbsp;<span id="stats-max"></span></p>
     </div>
     <div class="row">
       <div class="col-xs-12">
@@ -55,6 +69,15 @@
       </div>
     </div>
   </div>
+
+  <div class="container" style="margin-top: 20px">
+    <div class="row">
+      <div class="col-xs-4 col-sm-2 col-md-2 col-lg-1">
+        <button type="button" class="form-control" onclick="localStorage.clear()">Logout</button>
+      </div>
+    </div>
+  </div>
+
   <script type="text/javascript">
     function formatDate(date) {
       var hours = date.getHours();
@@ -68,40 +91,55 @@
     }
 
     $(function() {
-        var when = $('#whenpicker');
-        when.datetimepicker();
+      var when = $('#whenpicker');
+      when.datetimepicker();
 
-        var whenInput = $('#inputWhen');
-        var now = new Date();
-        whenInput.val(formatDate(now));
+      var whenInput = $('#inputWhen');
+      var now = new Date();
+      whenInput.val(formatDate(now));
     });
 
+    function login() {
+      var who = $('#inputWho').val();
+      localStorage.setItem('who', who);
+      location.reload();
+    }
+
     function addWeight() {
-        var weight = $('#inputWeight').val();
-        var when = $('#inputWhen').val();
+      var who = localStorage.getItem('who');
+      var weight = $('#inputWeight').val();
+      var when = $('#inputWhen').val();
 
-        var url = '/weight/add?weight=' + encodeURIComponent(weight) +
-            '&when=' + encodeURIComponent(when);
+      if (!who) {
+        console.error('Not logged in');
+        return;
+      }
 
-        $.get(url, function(data) {
-            if (data.status) {
-                updateStats();
-            } else {
-                alert('Weight could not be added');
-            }
-        });
+      var url = '/weight/add?' +
+        'who=' + encodeURIComponent(who) +
+        '&weight=' + encodeURIComponent(weight) +
+        '&when=' + encodeURIComponent(when);
+
+      $.get(url, function(data) {
+        if (data.status) {
+          updateStats();
+        } else {
+          alert('Weight could not be added');
+        }
+      });
     }
 
     function updateStats() {
-        var url = '/weight/get/all';
+      var who = localStorage.getItem('who');
+      var url = '/weight/get/all?who=' + encodeURIComponent(who);
 
-        $.get(url, function(data) {
-            $('#stats-avg').html(data.average);
-            $('#stats-min').html(data.minimum);
-            $('#stats-max').html(data.maximum);
+      $.get(url, function(data) {
+        $('#stats-avg').html(data.average);
+        $('#stats-min').html(data.minimum);
+        $('#stats-max').html(data.maximum);
 
-            updateChart(data);
-        });
+        updateChart(data);
+      });
     }
 
     var charts = {
@@ -152,8 +190,18 @@
     }
 
     window.onload = function() {
+      let who = localStorage.getItem('who');
+
       initCharts();
-      updateStats();
+
+      if (who) {
+        $('.page-header').text(`Stones - ${who}`);
+        $('.who-form').hide();
+        $('.weight-form').show();
+        updateStats();
+      } else {
+        $('.who-form').show();
+        $('.weight-form').hide();}
     }
   </script>
 </body>

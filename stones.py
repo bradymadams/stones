@@ -16,6 +16,7 @@ def index():
 
 @app.route('/weight/add')
 def weight_add():
+    who = request.args.get('who')
     weight = request.args.get('weight')
     when = request.args.get('when')
 
@@ -23,7 +24,7 @@ def weight_add():
         when = datetime.datetime.strptime(when, '%m/%d/%Y %I:%M %p')
 
         db = weightdb.WeightDb(DBNAME)
-        db.add_weight(weight, when)
+        db.add_weight(who, weight, when)
 
     except Exception as e:
         return jsonify({'status':False})
@@ -33,8 +34,9 @@ def weight_add():
 @app.route('/weight/get/all')
 @app.route('/weight/get/<int:days>')
 def weight_get(days=None):
+    who = request.args.get('who')
     db = weightdb.WeightDb(DBNAME)
-    wh = weightdb.WeightHistory(db, days)
+    wh = weightdb.WeightHistory(who, db, days)
     return jsonify(wh.dict_all())
 
 if __name__ == '__main__':
