@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stones</title>
+  <meta name="generator" content="HTML Tidy for HTML5 for Linux version 5.6.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/slate/bootstrap.min.css" rel="stylesheet" integrity="sha384-RpX8okQqCyUNG7PlOYNybyJXYTtGQH+7rIKiVvg1DLg6jahLEk47VvpUyS+E2/uJ" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js" integrity="sha256-8WqyJLuWKRBVhxXIL1jBDD7SDxU936oZkCnxQbWwJVw=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-xs-12 col-md-offset2 col-md-8">
+        <h1 class="page-header">Stones</h1>
+        <div class="form-group row">
+          <div class="col-xs-12 col-sm-6 col-md-4">
+            <input class="form-control" type="number" id=
+            "inputWeight" placeholder="Weight">
+          </div>
+          <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="input-group date" id="whenpicker">
+              <input class="form-control" type="text" id="inputWhen">
+            </div>
+          </div>
+        </div>
+        <div class="form-group row">
+          <div class="col-xs-12 col-sm-6 col-md-4">
+            <button type="button" class="form-control" onclick=
+            "addWeight()">Add Weight</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <div class="row" id="stats">
+      <p class="col-xs-12 col-sm-4">Average:&nbsp;<span id=
+      "stats-avg"></span></p>
+      <p class="col-xs-12 col-sm-4">Minimum:&nbsp;<span id=
+      "stats-min"></span></p>
+      <p class="col-xs-12 col-sm-4">Maximum:&nbsp;<span id=
+      "stats-max"></span></p>
+    </div>
+    <div class="row">
+      <div class="col-xs-12">
+        <canvas id="weight-chart">
+        </canvas>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript">
+    function formatDate(date) {
+      var hours = date.getHours();
+      var minutes = date.getMinutes();
+      var ampm = hours >= 12 ? 'pm' : 'am';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+      minutes = minutes < 10 ? '0'+minutes : minutes;
+      var strTime = hours + ':' + minutes + ' ' + ampm;
+      return date.getMonth()+1 + "/" + date.getDate() + "/" + date.getFullYear() + "  " + strTime;
+    }
+
+    $(function() {
+        var when = $('#whenpicker');
+        when.datetimepicker();
+
+        var whenInput = $('#inputWhen');
+        var now = new Date();
+        whenInput.val(formatDate(now));
+    });
+
+    function addWeight() {
+        var weight = $('#inputWeight').val();
+        var when = $('#inputWhen').val();
+
+        var url = '/weight/add?weight=' + encodeURIComponent(weight) +
+            '&when=' + encodeURIComponent(when);
+
+        $.get(url, function(data) {
+            if (data.status) {
+                updateStats();
+            } else {
+                alert('Weight could not be added');
+            }
+        });
+    }
+
+    function updateStats() {
+        var url = '/weight/get/all';
+
+        $.get(url, function(data) {
+            $('#stats-avg').html(data.average);
+            $('#stats-min').html(data.minimum);
+            $('#stats-max').html(data.maximum);
+
+            updateChart(data);
+        });
+    }
+
+    var charts = {
+      weight: null
+    };
+
+    function updateChart(data) {
+      let dataset = charts.weight.data.datasets[0];
+
+      dataset.data.length = 0;
+
+      for (let w of data.weights) {
+        dataset.data.push({ x: w[0], y: w[1] });
+      }
+
+      charts.weight.update();
+    }
+
+    function initCharts() {
+      let ctx = $('#weight-chart');
+      let chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          datasets: [{
+            borderColor: 'rgb(52, 235, 189)',
+            data: [],
+            fill: false,
+            label: 'Weight',
+            showLine: true
+          }]
+        },
+        options: {
+          scales: {
+            xAxes: [{
+              type: 'time',
+              unit: 'day',
+              time: {
+                displayFormats: {
+                  hour: 'll'
+                }
+              }
+            }],
+          }
+        }
+      });
+
+      charts.weight = chart;
+    }
+
+    window.onload = function() {
+      initCharts();
+      updateStats();
+    }
+  </script>
+</body>
+</html>
