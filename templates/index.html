@@ -131,7 +131,7 @@
 
     function updateStats() {
       var who = localStorage.getItem('who');
-      var url = '/weight/get/all?who=' + encodeURIComponent(who);
+      var url = '/weight/get/365?who=' + encodeURIComponent(who);
 
       $.get(url, function(data) {
         $('#stats-avg').html(data.average);
@@ -168,7 +168,8 @@
             data: [],
             fill: false,
             label: 'Weight',
-            showLine: true
+            showLine: true,
+            lineTension: 0.1
           }]
         },
         options: {
