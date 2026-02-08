@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 
-import sys
 import sqlite3
 import datetime
 import shutil
 
+
 class WeightDb(object):
-    DBName = 'weight.db'
+    DBName = "weight.db"
 
     def __init__(self, name=DBName):
         self.name = name
@@ -17,44 +17,50 @@ class WeightDb(object):
         self.conn.close()
 
     def backup(self):
-        shutil.copyfile(self.name, self.name + '.bak')
+        shutil.copyfile(self.name, self.name + ".bak")
 
     def create_table(self):
-        self.cursor.execute('CREATE TABLE weight_history (date datetime, weight real, who varchar)')
+        self.cursor.execute(
+            "CREATE TABLE weight_history (date datetime, weight real, who varchar)"
+        )
         self.conn.commit()
 
     def add_weight(self, who, weight, when=None):
         if when is None:
             when = datetime.datetime.now()
 
-        self.cursor.execute('INSERT INTO weight_history (who, date, weight) VALUES(?, ?, ?)', (who, when, float(weight)))
+        self.cursor.execute(
+            "INSERT INTO weight_history (who, date, weight) VALUES(?, ?, ?)",
+            (who, when, float(weight)),
+        )
         self.conn.commit()
 
     def add_csvdump(self, csv):
-        csvf = open(csv, 'r')
+        csvf = open(csv, "r")
         rows = csvf.readlines()
         csvf.close()
 
         for r in rows:
-            d, t, v = r.split(',')
-            dt = datetime.datetime.strptime(d + ' ' + t, '%m/%d/%y %I:%M:%S %p')
+            d, t, v = r.split(",")
+            dt = datetime.datetime.strptime(d + " " + t, "%m/%d/%y %I:%M:%S %p")
             self.add_weight(float(v), dt)
 
     def get_weights(self, who, days=None):
-        select = 'SELECT date, weight FROM weight_history WHERE who=?'
+        select = "SELECT date, weight FROM weight_history WHERE who=?"
 
         args = [who]
 
         if days:
-            select += ' AND date > ?'
+            select += " AND date > ?"
             oldest = datetime.datetime.now() - datetime.timedelta(days=days)
             args.append(oldest)
 
-        select += ' ORDER BY date DESC'
+        select += " ORDER BY date DESC"
 
         nrows = self.cursor.execute(select, args)
 
         return nrows.fetchall()
+
 
 class WeightHistory(object):
     def __init__(self, who, db, days):
@@ -81,8 +87,8 @@ class WeightHistory(object):
 
     def dict_all(self):
         return {
-            'weights': self.weights,
-            'average': '%6.2f' % self.average(),
-            'minimum': '%6.2f' % self.minimum(),
-            'maximum': '%6.2f' % self.maximum()
+            "weights": self.weights,
+            "average": "%6.2f" % self.average(),
+            "minimum": "%6.2f" % self.minimum(),
+            "maximum": "%6.2f" % self.maximum(),
         }
