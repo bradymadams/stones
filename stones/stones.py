@@ -1,13 +1,14 @@
 import datetime
-import os
-import weightdb
+import pathlib
 
 from flask import Flask, render_template, request, jsonify
+
+from . import weightdb
 
 app = Flask(__name__)
 app.debug = True
 
-DBNAME = os.path.join(app.root_path, "db", "weight.db")
+DBNAME = pathlib.Path(app.root_path).parent / "db" / "weight.db"
 
 
 @app.route("/")
@@ -17,14 +18,14 @@ def index():
 
 @app.route("/weight/add")
 def weight_add():
-    who = request.args.get("who")
-    weight = request.args.get("weight")
-    when = request.args.get("when")
+    who = request.args["who"]
+    weight = request.args["weight"]
+    when = request.args["when"]
 
     try:
         when = datetime.datetime.strptime(when, "%m/%d/%Y %I:%M %p")
 
-        db = weightdb.WeightDb(DBNAME)
+        db = weightdb.WeightDb(str(DBNAME))
         db.add_weight(who, weight, when)
 
     except Exception:
@@ -37,10 +38,6 @@ def weight_add():
 @app.route("/weight/get/<int:days>")
 def weight_get(days=None):
     who = request.args.get("who")
-    db = weightdb.WeightDb(DBNAME)
+    db = weightdb.WeightDb(str(DBNAME))
     wh = weightdb.WeightHistory(who, db, days)
     return jsonify(wh.dict_all())
-
-
-if __name__ == "__main__":
-    app.run()

@@ -115,10 +115,10 @@
         return;
       }
 
-      var url = '/weight/add?' +
-        'who=' + encodeURIComponent(who) +
-        '&weight=' + encodeURIComponent(weight) +
-        '&when=' + encodeURIComponent(when);
+      var url = '{{url_for('weight_add')}}?' +
+      'who=' + encodeURIComponent(who) +
+      '&weight=' + encodeURIComponent(weight) +
+      '&when=' + encodeURIComponent(when);
 
       $.get(url, function(data) {
         if (data.status) {
@@ -131,7 +131,7 @@
 
     function updateStats() {
       var who = localStorage.getItem('who');
-      var url = '/weight/get/365?who=' + encodeURIComponent(who);
+      var url = '{{url_for('weight_get', days=365)}}?who=' + encodeURIComponent(who);
 
       $.get(url, function(data) {
         $('#stats-avg').html(data.average);
