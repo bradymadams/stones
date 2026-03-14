@@ -1,6 +1,7 @@
 FROM python:3.13-slim
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Doesn't work on arm/v7. Revert and remove `pip install uv` step when arm/v7 no longer needed.
+# COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /stones
 
@@ -9,7 +10,8 @@ RUN mkdir -p /stones/db
 COPY stones/ ./stones
 COPY app.py pyproject.toml uv.lock ./
 
-RUN uv sync --frozen --no-dev --no-install-project
+RUN pip install uv && \
+  uv sync --frozen --no-dev --no-install-project
 
 EXPOSE 5000
 
