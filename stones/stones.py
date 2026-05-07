@@ -25,7 +25,7 @@ def weight_add():
     try:
         when = datetime.datetime.strptime(when, "%m/%d/%Y %I:%M %p")
 
-        db = weightdb.WeightDb(str(DBNAME))
+        db = weightdb.WeightDb(DBNAME)
         db.add_weight(who, weight, when)
 
     except Exception:
@@ -38,6 +38,6 @@ def weight_add():
 @app.route("/weight/get/<int:days>")
 def weight_get(days=None):
     who = request.args.get("who")
-    db = weightdb.WeightDb(str(DBNAME))
+    db = weightdb.WeightDb(DBNAME)
     wh = weightdb.WeightHistory(who, db, days)
     return jsonify(wh.dict_all())

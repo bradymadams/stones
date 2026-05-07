@@ -1,14 +1,12 @@
-#! /usr/bin/env python
-
-import sqlite3
 import datetime
+import pathlib
 import shutil
 
+import sqlite3
 
-class WeightDb(object):
-    DBName = "weight.db"
 
-    def __init__(self, name=DBName):
+class WeightDb:
+    def __init__(self, name: pathlib.Path):
         self.name = name
         self.conn = sqlite3.connect(name)
         self.cursor = self.conn.cursor()
@@ -17,7 +15,7 @@ class WeightDb(object):
         self.conn.close()
 
     def backup(self):
-        shutil.copyfile(self.name, self.name + ".bak")
+        shutil.copyfile(self.name, self.name.with_suffix(".db.bak"))
 
     def create_table(self):
         self.cursor.execute(
